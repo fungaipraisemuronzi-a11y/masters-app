@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master's Students Board</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+
+<h2><%= student.name %> - <%= period.name %></h2>
+
+<h3>Payment History</h3>
+
+<table border="1" cellpadding="5" cellspacing="0" width="40%">
+  <tr>
+    <th>Amount</th>
+    <th>Date</th>
+    <th>Action</th>
+  </tr>
+
+  <% payments.forEach(payment => { %>
+    <tr>
+      <td><%= payment.amount %></td>
+      <td><%= payment.date %></td>
+      <td>
+        <a href="/edit-payment/<%= payment.id %>">Edit payment</a>
+      </td>
+    </tr>
+  <% }) %>
+</table>
+
+<br>
+<a href="/period/<%= period.id %>">Back</a>
+</body></html>

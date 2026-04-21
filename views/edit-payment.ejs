@@ -1,0 +1,28 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master's Students Board</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="container">
+
+<h2>Edit Payment</h2>
+
+<form method="POST">
+  <input 
+    type="number" 
+    step="0.5"
+    name="amount" 
+    value="<%= payment.amount %>" 
+    required
+  >
+  <button>Update</button>
+</form>
+
+<br>
+<a href="javascript:history.back()">Cancel</a>
+</div> 
+</body></html>

@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master's Students Board</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+
+<h2>Edit Period</h2>
+
+<form method="POST">
+  <input 
+    type="text" 
+    name="name" 
+    value="<%= period.name %>" 
+    required
+  >
+  <br><br>
+
+  <input 
+    type="number" 
+    step="0.5"
+    name="target" 
+    value="<%= period.target %>" 
+    required
+  >
+  <br><br>
+
+  <button>Update</button>
+</form>
+
+<br>
+<a href="/period/<%= period.id %>">Cancel</a>
+</body></html>

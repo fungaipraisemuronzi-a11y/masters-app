@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master's Students Board</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+
+<h2>Students With Credit - <%= period.name %></h2>
+
+<ol>
+  <% students.forEach(student => { %>
+    <li>
+      <%= student.name %> ---Only Paid: <%= student.total %>
+    </li>
+  <% }) %>
+</ol>
+
+<a href="/period/<%= period.id %>">Back</a>
+</div> 
+</body></html>

@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master's Students Board</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+
+<div class="card"><h2>Period: <%= period.name %></h2>
+<p>
+  Target Amount: <%= period.target %> 
+ <br> <a href="/edit-period/<%= period.id %>">Edit</a>
+</p></div>
+
+<a href="/credit/<%= period.id %>">Students with Credit</a>
+<br><br>
+<a href="/advance/<%= period.id %>">Students Paid in Advance</a>
+
+<h3>Students</h3>
+
+<ol>
+  <% students.forEach(student => { %>
+    <li>
+      <strong><%= student.name %></strong>
+      Total Amount: <%= student.total %>
+
+      <form method="POST" action="/payment" style="display:inline;">
+       <br> <input type="hidden" name="student_id" value="<%= student.id %>">
+        <input type="hidden" name="period_id" value="<%= period.id %>">
+        <input type="number" step="0.5" name="amount" placeholder="Add payment" required>
+        <button>Add</button>
+      </form>
+<br>
+      <a href="/student/<%= student.id %>/<%= period.id %>">
+        View Details
+      </a>
+<br><br><br>
+      <a class="delete" href="/delete-student/<%= student.id %>/<%= period.id %>">
+        Delete Student
+      </a>
+    </li>
+  <% }) %>
+</ol>
+
+<a href="/home">Back</a>
+</body></html>

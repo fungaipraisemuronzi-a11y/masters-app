@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master's Students Board</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="container">
+<h2>Create Period</h2>
+
+<form method="POST" action="/add-period">
+  <input type="text" name="name" placeholder="Period name" required>
+  <br><br>
+  <input type="number" step="0.5" name="target" placeholder="Target amount" required>
+  <br><br>
+  <button>Create</button>
+</form>
+
+<br>
+<a href="/home">Back</a>
+</div>
+</body>
+</html>

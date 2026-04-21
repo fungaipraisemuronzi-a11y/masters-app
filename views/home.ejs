@@ -1,0 +1,30 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master's Students Board</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+
+<h1>Master's Students Board</h1>
+
+<a href="/add-student">Add Student</a>
+<br><br>
+
+<a href="/add-period">Create Period</a>
+
+<h2>Periods</h2>
+
+<ul>
+  <% periods.forEach(period => { %>
+    <li>
+      <a href="/period/<%= period.id %>">
+        <%= period.name %> (Target: <%= period.target %>)
+      </a>
+    </li>
+  <% }) %>
+</ul>
+</body></html>

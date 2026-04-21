@@ -1,0 +1,129 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f9;
+  margin: 0;
+  padding: 15px;
+}
+
+h1 {
+  font-size: 40px;
+}
+
+h2 {
+  font-size: 22px;
+}
+
+h3 {
+  font-size: 18px;
+}
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 27px;
+  }
+
+  h2 {
+    font-size: 18px;
+  }
+
+  h3 {
+    font-size: 16px;
+  }
+}
+
+h1, h2, h3 {
+  color: #333;
+}
+
+a {
+  text-decoration: none;
+  color: #007bff;
+  margin-right: 10px;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 10px;
+}
+
+form {
+  margin: 10px 0;
+}
+
+input {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px;
+  margin: 5px 0;
+}
+
+button {
+  padding: 10px 14px;
+  background: #007bff;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  width: auto;
+}
+
+@media (max-width: 600px) {
+  button {
+    width: 100%;
+  }
+}
+
+button:hover {
+  background: #0056b3;
+}
+
+ul, ol {
+  padding: 0;
+}
+
+li {
+  background: white;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+a {
+  display: inline-block;
+  margin: 5px 8px 5px 0;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+button, a.button {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 4px;
+  width: 100px;
+}
+
+button.delete, a.delete {
+  background: #dc3545;
+  color: white;
+}
