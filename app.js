@@ -25,6 +25,7 @@ app.get("/", (req, res) => {
 
 const PASSWORD = "admin321";
 
+/* ---------------- LOGIN ---------------- */
 app.get("/login", (req, res) => {
   res.render("login");
 });
@@ -40,200 +41,177 @@ app.post("/login", (req, res) => {
   }
 });
 
-app.get("/home", requireLogin, (req, res) => {
-  const periods = db.prepare("SELECT * FROM periods").all();
+/* ---------------- HOME ---------------- */
+app.get("/home", requireLogin, async (req, res) => {
+  const periods = (await db.query("SELECT * FROM periods")).rows;
   res.render("home", { periods });
 });
 
-app.get("/add-student", requireLogin, (req, res) => {
-  const students = db.prepare("SELECT * FROM students ORDER BY name").all();
+/* ---------------- STUDENTS ---------------- */
+app.get("/add-student", requireLogin, async (req, res) => {
+  const students = (await db.query("SELECT * FROM students ORDER BY name")).rows;
 
-  const total = db
-    .prepare("SELECT COUNT(*) as count FROM students")
-    .get()
-    .count;
+  const totalResult = await db.query("SELECT COUNT(*) FROM students");
+  const total = totalResult.rows[0].count;
 
   res.render("add-student", { students, total });
 });
 
-app.post("/add-student", requireLogin, (req, res) => {
+app.post("/add-student", requireLogin, async (req, res) => {
   const { name } = req.body;
 
-  db.prepare("INSERT INTO students (name) VALUES (?)")
-    .run(name);
+  await db.query("INSERT INTO students (name) VALUES ($1)", [name]);
 
   res.redirect("/home");
 });
 
-app.get("/period/:id", requireLogin, (req, res) => {
+/* ---------------- PERIOD ---------------- */
+app.get("/period/:id", requireLogin, async (req, res) => {
   const periodId = req.params.id;
 
-  const period = db
-    .prepare("SELECT * FROM periods WHERE id = ?")
-    .get(periodId);
+  const period = (await db.query("SELECT * FROM periods WHERE id=$1", [periodId])).rows[0];
 
-  const students = db.prepare(`
+  const students = (await db.query(`
     SELECT 
       students.*,
-      IFNULL(SUM(payments.amount), 0) as total
+      COALESCE(SUM(payments.amount),0) as total
     FROM students
     LEFT JOIN payments 
       ON students.id = payments.student_id 
-      AND payments.period_id = ?
+      AND payments.period_id = $1
     GROUP BY students.id
-  `).all(periodId);
+  `, [periodId])).rows;
 
   res.render("period-details", { period, students });
 });
 
+/* ---------------- ADD PERIOD ---------------- */
 app.get("/add-period", requireLogin, (req, res) => {
   res.render("add-period");
 });
 
-app.post("/add-period", requireLogin, (req, res) => {
+app.post("/add-period", requireLogin, async (req, res) => {
   const { name, target } = req.body;
 
-  db.prepare(`
-    INSERT INTO periods (name, target)
-    VALUES (?, ?)
-  `).run(name, target);
+  await db.query(
+    "INSERT INTO periods (name, target) VALUES ($1, $2)",
+    [name, target]
+  );
 
   res.redirect("/home");
 });
 
-app.post("/payment", requireLogin, (req, res) => {
+/* ---------------- PAYMENT ---------------- */
+app.post("/payment", requireLogin, async (req, res) => {
   const { student_id, period_id, amount } = req.body;
 
   const date = new Date().toISOString().split("T")[0];
 
-  db.prepare(`
-    INSERT INTO payments (student_id, period_id, amount, date)
-    VALUES (?, ?, ?, ?)
-  `).run(student_id, period_id, amount, date);
+  await db.query(
+    "INSERT INTO payments (student_id, period_id, amount, date) VALUES ($1,$2,$3,$4)",
+    [student_id, period_id, amount, date]
+  );
 
   res.redirect(`/period/${period_id}`);
 });
 
-app.get("/delete-student/:id", requireLogin, (req, res) => {
-  const id = req.params.id;
+/* ---------------- DELETE STUDENT ---------------- */
+app.get("/delete-student/:id/:periodId", requireLogin, async (req, res) => {
+  const { id, periodId } = req.params;
 
-  db.prepare("DELETE FROM students WHERE id = ?").run(id);
+  await db.query("DELETE FROM students WHERE id=$1", [id]);
 
-  res.redirect("javascript:history.back()"); // ❌ still not best
+  res.redirect(`/period/${periodId}`);
 });
 
-app.get("/credit/:periodId", requireLogin, (req, res) => {
+/* ---------------- CREDIT ---------------- */
+app.get("/credit/:periodId", requireLogin, async (req, res) => {
   const periodId = req.params.periodId;
 
-  const period = db
-    .prepare("SELECT * FROM periods WHERE id = ?")
-    .get(periodId);
+  const period = (await db.query("SELECT * FROM periods WHERE id=$1", [periodId])).rows[0];
 
-  const students = db.prepare(`
-    SELECT 
-      students.*,
-      IFNULL(SUM(payments.amount), 0) as total
+  const students = (await db.query(`
+    SELECT students.*, COALESCE(SUM(payments.amount),0) as total
     FROM students
     LEFT JOIN payments 
       ON students.id = payments.student_id 
-      AND payments.period_id = ?
+      AND payments.period_id = $1
     GROUP BY students.id
-    HAVING total < ?
-  `).all(periodId, period.target);
+    HAVING COALESCE(SUM(payments.amount),0) < $2
+  `, [periodId, period.target])).rows;
 
   res.render("credit", { students, period });
 });
 
-app.get("/advance/:periodId", requireLogin, (req, res) => {
+/* ---------------- ADVANCE ---------------- */
+app.get("/advance/:periodId", requireLogin, async (req, res) => {
   const periodId = req.params.periodId;
 
-  const period = db
-    .prepare("SELECT * FROM periods WHERE id = ?")
-    .get(periodId);
+  const period = (await db.query("SELECT * FROM periods WHERE id=$1", [periodId])).rows[0];
 
-  const students = db.prepare(`
-    SELECT 
-      students.*,
-      IFNULL(SUM(payments.amount), 0) as total
+  const students = (await db.query(`
+    SELECT students.*, COALESCE(SUM(payments.amount),0) as total
     FROM students
     LEFT JOIN payments 
       ON students.id = payments.student_id 
-      AND payments.period_id = ?
+      AND payments.period_id = $1
     GROUP BY students.id
-    HAVING total > ?
-  `).all(periodId, period.target);
+    HAVING COALESCE(SUM(payments.amount),0) > $2
+  `, [periodId, period.target])).rows;
 
   res.render("advance", { students, period });
 });
 
-app.get("/student/:studentId/:periodId", requireLogin, (req, res) => {
+/* ---------------- STUDENT DETAILS ---------------- */
+app.get("/student/:studentId/:periodId", requireLogin, async (req, res) => {
   const { studentId, periodId } = req.params;
 
-  const student = db
-    .prepare("SELECT * FROM students WHERE id = ?")
-    .get(studentId);
+  const student = (await db.query("SELECT * FROM students WHERE id=$1", [studentId])).rows[0];
+  const period = (await db.query("SELECT * FROM periods WHERE id=$1", [periodId])).rows[0];
 
-  const period = db
-    .prepare("SELECT * FROM periods WHERE id = ?")
-    .get(periodId);
-
-  const payments = db.prepare(`
+  const payments = (await db.query(`
     SELECT * FROM payments
-    WHERE student_id = ? AND period_id = ?
+    WHERE student_id=$1 AND period_id=$2
     ORDER BY date DESC
-  `).all(studentId, periodId);
+  `, [studentId, periodId])).rows;
 
-  res.render("student-details", {
-    student,
-    period,
-    payments
-  });
+  res.render("student-details", { student, period, payments });
 });
 
-app.get("/edit-payment/:id", requireLogin, (req, res) => {
-  const payment = db
-    .prepare("SELECT * FROM payments WHERE id = ?")
-    .get(req.params.id);
-
+/* ---------------- EDIT PAYMENT ---------------- */
+app.get("/edit-payment/:id", requireLogin, async (req, res) => {
+  const payment = (await db.query("SELECT * FROM payments WHERE id=$1", [req.params.id])).rows[0];
   res.render("edit-payment", { payment });
 });
 
-app.post("/edit-payment/:id", requireLogin, (req, res) => {
+app.post("/edit-payment/:id", requireLogin, async (req, res) => {
   const { amount } = req.body;
 
-  const payment = db
-    .prepare("SELECT * FROM payments WHERE id = ?")
-    .get(req.params.id);
+  const payment = (await db.query("SELECT * FROM payments WHERE id=$1", [req.params.id])).rows[0];
 
-  db.prepare(`
-    UPDATE payments
-    SET amount = ?
-    WHERE id = ?
-  `).run(amount, req.params.id);
+  await db.query("UPDATE payments SET amount=$1 WHERE id=$2", [amount, req.params.id]);
 
   res.redirect(`/student/${payment.student_id}/${payment.period_id}`);
 });
 
-app.get("/edit-period/:id", requireLogin, (req, res) => {
-  const period = db
-    .prepare("SELECT * FROM periods WHERE id = ?")
-    .get(req.params.id);
-
+/* ---------------- EDIT PERIOD ---------------- */
+app.get("/edit-period/:id", requireLogin, async (req, res) => {
+  const period = (await db.query("SELECT * FROM periods WHERE id=$1", [req.params.id])).rows[0];
   res.render("edit-period", { period });
 });
 
-app.post("/edit-period/:id", requireLogin, (req, res) => {
+app.post("/edit-period/:id", requireLogin, async (req, res) => {
   const { name, target } = req.body;
 
-  db.prepare(`
-    UPDATE periods
-    SET name = ?, target = ?
-    WHERE id = ?
-  `).run(name, target, req.params.id);
+  await db.query(
+    "UPDATE periods SET name=$1, target=$2 WHERE id=$3",
+    [name, target, req.params.id]
+  );
 
   res.redirect(`/period/${req.params.id}`);
 });
 
+/* ---------------- LOGIN CHECK ---------------- */
 function requireLogin(req, res, next) {
   if (!req.session.loggedIn) {
     return res.redirect("/login");
@@ -241,6 +219,7 @@ function requireLogin(req, res, next) {
   next();
 }
 
+/* ---------------- START SERVER ---------------- */
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
