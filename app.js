@@ -69,17 +69,21 @@ app.post("/add-student", requireLogin, async (req, res) => {
 app.get("/period/:id", requireLogin, async (req, res) => {
   const periodId = req.params.id;
 
-  const period = (await db.query("SELECT * FROM periods WHERE id=$1", [periodId])).rows[0];
+  const period = (await db.query(
+    "SELECT * FROM periods WHERE id=$1",
+    [periodId]
+  )).rows[0];
 
   const students = (await db.query(`
     SELECT 
-      students.*,
+      students.id,
+      students.name,
       COALESCE(SUM(payments.amount),0) as total
     FROM students
     LEFT JOIN payments 
       ON students.id = payments.student_id 
       AND payments.period_id = $1
-    GROUP BY students.id
+    GROUP BY students.id, students.name
   `, [periodId])).rows;
 
   res.render("period-details", { period, students });
@@ -131,14 +135,17 @@ app.get("/credit/:periodId", requireLogin, async (req, res) => {
   const period = (await db.query("SELECT * FROM periods WHERE id=$1", [periodId])).rows[0];
 
   const students = (await db.query(`
-    SELECT students.*, COALESCE(SUM(payments.amount),0) as total
-    FROM students
-    LEFT JOIN payments 
-      ON students.id = payments.student_id 
-      AND payments.period_id = $1
-    GROUP BY students.id
-    HAVING COALESCE(SUM(payments.amount),0) < $2
-  `, [periodId, period.target])).rows;
+  SELECT 
+    students.id,
+    students.name,
+    COALESCE(SUM(payments.amount),0) as total
+  FROM students
+  LEFT JOIN payments 
+    ON students.id = payments.student_id 
+    AND payments.period_id = $1
+  GROUP BY students.id, students.name
+  HAVING COALESCE(SUM(payments.amount),0) < $2
+`, [periodId, period.target])).rows;
 
   res.render("credit", { students, period });
 });
@@ -150,14 +157,17 @@ app.get("/advance/:periodId", requireLogin, async (req, res) => {
   const period = (await db.query("SELECT * FROM periods WHERE id=$1", [periodId])).rows[0];
 
   const students = (await db.query(`
-    SELECT students.*, COALESCE(SUM(payments.amount),0) as total
-    FROM students
-    LEFT JOIN payments 
-      ON students.id = payments.student_id 
-      AND payments.period_id = $1
-    GROUP BY students.id
-    HAVING COALESCE(SUM(payments.amount),0) > $2
-  `, [periodId, period.target])).rows;
+  SELECT 
+    students.id,
+    students.name,
+    COALESCE(SUM(payments.amount),0) as total
+  FROM students
+  LEFT JOIN payments 
+    ON students.id = payments.student_id 
+    AND payments.period_id = $1
+  GROUP BY students.id, students.name
+  HAVING COALESCE(SUM(payments.amount),0) > $2
+`, [periodId, period.target])).rows;
 
   res.render("advance", { students, period });
 });
